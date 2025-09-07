@@ -1,8 +1,9 @@
 /* ========== GLOBAL ========== */
 :root{
-  /* ✅ Set your background image URL here */
-  --bg-url: url('Image.jpeg'); /* replace with your direct ImgBB link if needed */
+  /* ✅ Set your background image URL here (direct URL or repo path like images/bg.jpg) */
+  --bg-url: url('https://i.ibb.co/Fqjs4mmZ/Backgroung-image.jpg');
   --kcfs-blue: #0054d1;
+  --kcfs-blue-dark: #003c99;
   --light-tan: #f5e6cc;
   --white: #ffffff;
 }
@@ -17,7 +18,6 @@ body {
   font-family: 'Poppins', sans-serif;
   color: var(--kcfs-blue);
   min-height: 100vh;
-  /* SIMPLE, RELIABLE BACKGROUND via CSS */
   background: var(--bg-url) no-repeat center center fixed;
   background-size: cover;
 }
@@ -38,7 +38,7 @@ body {
 /* ========== TOP BAR / TITLE ========== */
 .topbar {
   position: relative;
-  z-index: 1;
+  z-index: 1; /* ensure clicks pass; UI is above overlay */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -150,8 +150,12 @@ body {
   animation: fadeIn 220ms ease;
 }
 
-/* Clean list; subtle separators; no bottom border on last item */
+/* Each row + subtle separators; no bottom border on last item */
 #linksList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 10px 4px;
   border-bottom: 1px solid #e9edf6;
 }
@@ -163,6 +167,19 @@ body {
   font-weight: 700;
 }
 #linksList a:hover { text-decoration: underline; }
+
+/* Delete button (blue) */
+#linksList .delete-btn {
+  background: var(--kcfs-blue);
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+#linksList .delete-btn:hover { background: var(--kcfs-blue-dark); }
 
 /* ========== MODAL ========== */
 .modal {
@@ -209,4 +226,3 @@ body {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
