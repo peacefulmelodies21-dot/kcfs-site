@@ -1,7 +1,7 @@
 /* ========== GLOBAL ========== */
 :root{
   /* ✅ Set your background image URL here (direct URL or repo path like images/bg.jpg) */
-  --bg-url: url('https://i.ibb.co/Fqjs4mmZ/Backgroung-image.jpg');
+  --bg-url: url('Image.jpeg');
   --kcfs-blue: #0054d1;
   --kcfs-blue-dark: #003c99;
   --light-tan: #f5e6cc;
@@ -226,3 +226,4 @@ body {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
