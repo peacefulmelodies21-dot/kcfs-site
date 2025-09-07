@@ -1,7 +1,7 @@
 /* ========== GLOBAL ========== */
 :root{
   /* ✅ Set your background image URL here */
-  --bg-url: url('https://i.ibb.co/b5xKP23S/Whats-App-Image-2025-09-07-at-8-34-06-AM.jpg'); /* replace with your direct ImgBB link if needed */
+  --bg-url: url('Image.jpeg'); /* replace with your direct ImgBB link if needed */
   --kcfs-blue: #0054d1;
   --light-tan: #f5e6cc;
   --white: #ffffff;
@@ -209,3 +209,4 @@ body {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
