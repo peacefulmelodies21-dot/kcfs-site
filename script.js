@@ -41,13 +41,26 @@ function hideLinksUI() {
   setFade(false);
 }
 
+// Return to pure background (no text, no forms, sidebar collapsed)
+function resetToHome() {
+  // Hide any open modal and fade
+  loginModal.classList.add("hidden");
+  setFade(false);
+
+  // Clear teacher area and links UI
+  teacherContainer.innerHTML = "";
+  hideLinksUI();
+
+  // Collapse sidebar
+  sidebar.classList.add("collapsed");
+}
+
 // ========= SIDEBAR TOGGLE =========
 function toggleSidebar() {
   sidebar.classList.toggle("collapsed");
   // If sidebar collapsed → return to pure homepage (no text)
   if (sidebar.classList.contains("collapsed")) {
-    hideLinksUI();
-    teacherContainer.innerHTML = "";
+    resetToHome();
   }
 }
 window.toggleSidebar = toggleSidebar;
@@ -79,10 +92,17 @@ function login() {
 }
 window.login = login;
 
-function logout() { auth.signOut(); }
+function logout() {
+  auth.signOut()
+    .then(() => {
+      // Immediately clean the UI after sign-out
+      resetToHome();
+    })
+    .catch(err => alert("Logout failed: " + err.message));
+}
 window.logout = logout;
 
-// Auth state changes
+// React to auth state changes as a backstop
 auth.onAuthStateChanged(user => {
   if (user) {
     logoutBtn.classList.remove("hidden");
@@ -106,53 +126,111 @@ auth.onAuthStateChanged(user => {
   } else {
     logoutBtn.classList.add("hidden");
     loginBtn.classList.remove("hidden");
-    teacherContainer.innerHTML = "";
+    // Ensure we’re back to background-only when signed out
+    resetToHome();
   }
 });
 
 // ========= LINKS =========
+// Teachers add links; store who created it so only they can delete their own links.
+// Legacy items (no createdBy) show delete to any logged-in teacher for cleanup.
 function addLink() {
   const name  = document.getElementById("linkName").value.trim();
   const url   = document.getElementById("linkUrl").value.trim();
   const grade = document.getElementById("gradeSelect").value;
 
+  const user = auth.currentUser;
+  if (!user) {
+    alert("Please log in as a teacher to add links.");
+    return;
+  }
+
   if (name && url) {
-    db.collection("links").add({ name, url, grade }).then(() => {
+    db.collection("links").add({
+      name,
+      url,
+      grade,
+      createdBy: {
+        uid: user.uid,
+        email: user.email || ""
+      },
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
       document.getElementById("linkName").value = "";
       document.getElementById("linkUrl").value  = "";
       loadLinks(grade);
-    });
+    }).catch(err => alert("Error adding link: " + err.message));
   } else {
     alert("Please enter both a name and a valid URL.");
   }
 }
 window.addLink = addLink;
 
+function deleteLink(id) {
+  if (!auth.currentUser) return;
+  if (!confirm("Delete this link?")) return;
+
+  db.collection("links").doc(id).delete()
+    .then(() => {
+      const currentGrade = linksHeading.textContent.replace("Links for ", "");
+      loadLinks(currentGrade);
+    })
+    .catch(err => alert("Error deleting: " + err.message));
+}
+window.deleteLink = deleteLink;
+
 function loadLinks(grade) {
-  showLinksUI(grade);
   linksList.innerHTML = "";
+  showLinksUI(grade);
+
+  const currentUser = auth.currentUser;
 
   db.collection("links")
     .where("grade", "==", grade)
     .get()
     .then(snapshot => {
       if (snapshot.empty) {
-        linksList.innerHTML = `<li>No links yet for ${grade}</li>`;
+        linksList.innerHTML = `<li><span>No links yet for ${grade}</span></li>`;
       } else {
         const frag = document.createDocumentFragment();
         snapshot.forEach(doc => {
           const data = doc.data();
           const li = document.createElement("li");
-          li.innerHTML = `<a href="${data.url}" target="_blank" rel="noopener">${data.name}</a>`;
+
+          // Link
+          const a = document.createElement("a");
+          a.href = data.url;
+          a.target = "_blank";
+          a.rel = "noopener";
+          a.textContent = data.name;
+          li.appendChild(a);
+
+          // Delete button visibility:
+          // - teacher logged in AND (creator OR legacy without createdBy)
+          const isTeacherLoggedIn = !!currentUser;
+          const isLegacy  = !data.createdBy;
+          const isCreator = currentUser && data.createdBy && data.createdBy.uid === currentUser.uid;
+          const canDelete = isTeacherLoggedIn && (isCreator || isLegacy);
+
+          if (canDelete) {
+            const btn = document.createElement("button");
+            btn.className = "delete-btn";
+            btn.textContent = "Delete";
+            btn.onclick = () => deleteLink(doc.id);
+            li.appendChild(btn);
+          }
+
           frag.appendChild(li);
         });
         linksList.appendChild(frag);
       }
     })
-    .catch(err => console.error("Error loading links:", err));
+    .catch(err => {
+      console.error("Error loading links:", err);
+      alert("Couldn't load links. Check the console for details.");
+    });
 }
 window.loadLinks = loadLinks;
 
 // ========= DEFAULT (HOMEPAGE) =========
-// On load: pure background only (no text)
-window.onload = () => { hideLinksUI(); };
+window.onload = () => { resetToHome(); };
